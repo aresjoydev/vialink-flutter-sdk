@@ -1,3 +1,7 @@
+## 2.0.7
+
+- iOS SDK v1.0.7 바이너리 업데이트
+
 ## 2.0.6
 
 - iOS xcframework Modules 포함 (import ViaLinkCore 수정)
