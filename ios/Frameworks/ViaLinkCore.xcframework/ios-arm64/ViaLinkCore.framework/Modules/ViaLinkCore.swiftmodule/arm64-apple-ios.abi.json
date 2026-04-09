@@ -356,6 +356,20 @@
       },
       {
         "kind": "Import",
+        "name": "CoreTelephony",
+        "printedName": "CoreTelephony",
+        "declKind": "Import",
+        "moduleName": "ViaLinkCore"
+      },
+      {
+        "kind": "Import",
+        "name": "Network",
+        "printedName": "Network",
+        "declKind": "Import",
+        "moduleName": "ViaLinkCore"
+      },
+      {
+        "kind": "Import",
         "name": "Foundation",
         "printedName": "Foundation",
         "declKind": "Import",
@@ -380,6 +394,58 @@
         "name": "ViaLinkSDK",
         "printedName": "ViaLinkSDK",
         "children": [
+          {
+            "kind": "Var",
+            "name": "sdkVersion",
+            "printedName": "sdkVersion",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:11ViaLinkCore0aB3SDKC10sdkVersionSSvpZ",
+            "mangledName": "$s11ViaLinkCore0aB3SDKC10sdkVersionSSvpZ",
+            "moduleName": "ViaLinkCore",
+            "static": true,
+            "declAttributes": [
+              "HasInitialValue",
+              "Final",
+              "HasStorage",
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:11ViaLinkCore0aB3SDKC10sdkVersionSSvgZ",
+                "mangledName": "$s11ViaLinkCore0aB3SDKC10sdkVersionSSvgZ",
+                "moduleName": "ViaLinkCore",
+                "static": true,
+                "implicit": true,
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
           {
             "kind": "Var",
             "name": "shared",
@@ -431,6 +497,34 @@
                 "accessorKind": "get"
               }
             ]
+          },
+          {
+            "kind": "Function",
+            "name": "setWrapper",
+            "printedName": "setWrapper(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:11ViaLinkCore0aB3SDKC10setWrapperyySSF",
+            "mangledName": "$s11ViaLinkCore0aB3SDKC10setWrapperyySSF",
+            "moduleName": "ViaLinkCore",
+            "declAttributes": [
+              "Final",
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "funcSelfKind": "NonMutating"
           },
           {
             "kind": "Function",
@@ -1078,21 +1172,21 @@
     {
       "filePath": "\/Users\/sungyonglee\/Dropbox\/project\/vialink-ios-sdk\/Sources\/ViaLinkCore\/EventTracker.swift",
       "kind": "Array",
-      "offset": 235,
+      "offset": 274,
       "length": 2,
       "value": "[]"
     },
     {
       "filePath": "\/Users\/sungyonglee\/Dropbox\/project\/vialink-ios-sdk\/Sources\/ViaLinkCore\/EventTracker.swift",
       "kind": "IntegerLiteral",
-      "offset": 301,
+      "offset": 340,
       "length": 3,
       "value": "100"
     },
     {
       "filePath": "\/Users\/sungyonglee\/Dropbox\/project\/vialink-ios-sdk\/Sources\/ViaLinkCore\/EventTracker.swift",
       "kind": "IntegerLiteral",
-      "offset": 876,
+      "offset": 976,
       "length": 2,
       "value": "30"
     },
@@ -1127,14 +1221,21 @@
     {
       "filePath": "\/Users\/sungyonglee\/Dropbox\/project\/vialink-ios-sdk\/Sources\/ViaLinkCore\/ViaLinkSDK.swift",
       "kind": "StringLiteral",
-      "offset": 1142,
+      "offset": 999,
+      "length": 7,
+      "value": "\"1.0.7\""
+    },
+    {
+      "filePath": "\/Users\/sungyonglee\/Dropbox\/project\/vialink-ios-sdk\/Sources\/ViaLinkCore\/ViaLinkSDK.swift",
+      "kind": "StringLiteral",
+      "offset": 1213,
       "length": 21,
       "value": "\"https:\/\/vialink.app\""
     },
     {
       "filePath": "\/Users\/sungyonglee\/Dropbox\/project\/vialink-ios-sdk\/Sources\/ViaLinkCore\/ViaLinkSDK.swift",
       "kind": "BooleanLiteral",
-      "offset": 1356,
+      "offset": 1427,
       "length": 5,
       "value": "false"
     }
