@@ -1,6 +1,6 @@
 name: vialink_flutter_plugin
 description: ViaLink 딥링크 SDK for Flutter - 딥링크 라우팅, 디퍼드 딥링킹, 이벤트 추적
-version: 2.0.7
+version: 2.0.8
 homepage: https://vialink.app
 
 environment:

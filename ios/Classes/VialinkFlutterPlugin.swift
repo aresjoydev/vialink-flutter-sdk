@@ -4,6 +4,8 @@ import ViaLinkCore
 
 public class ViaLinkFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
 
+    static let wrapperVersion = "2.0.7"
+
     private var deepLinkSink: FlutterEventSink?
     private var deferredHandler = DeferredStreamHandler()
     private var pendingDeepLink: [String: Any?]?
@@ -41,6 +43,7 @@ public class ViaLinkFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamHandler
                 result(FlutterError(code: "INVALID_ARG", message: "apiKey 필요", details: nil))
                 return
             }
+            ViaLinkSDK.shared.setWrapper("flutter/\(Self.wrapperVersion)")
             ViaLinkSDK.shared.configure(apiKey: apiKey)
 
             ViaLinkSDK.shared.onDeepLink { [weak self] data in

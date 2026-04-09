@@ -13,6 +13,10 @@ import kotlinx.coroutines.*
 
 class ViaLinkFlutterPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware {
 
+    companion object {
+        const val WRAPPER_VERSION = "2.0.7"
+    }
+
     private lateinit var methodChannel: MethodChannel
     private lateinit var deepLinkChannel: EventChannel
     private lateinit var deferredChannel: EventChannel
@@ -60,6 +64,7 @@ class ViaLinkFlutterPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Act
         when (call.method) {
             "configure" -> {
                 val apiKey = call.argument<String>("apiKey")!!
+                ViaLinkSDK.setWrapper("flutter/$WRAPPER_VERSION")
                 ViaLinkSDK.init(context!!, apiKey)
 
                 // 네이티브 콜백 → EventSink 연결
