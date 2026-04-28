@@ -36,5 +36,15 @@ class ViaLinkMethodChannel {
             (event) => Map<String, dynamic>.from(event as Map),
           );
 
+  Future<Map<String, dynamic>> paymentInitiated(
+    Map<String, dynamic> args,
+  ) async {
+    final result = await _method.invokeMethod<Map<dynamic, dynamic>>(
+      'paymentInitiated',
+      args,
+    );
+    return Map<String, dynamic>.from(result ?? const {});
+  }
+
   Future<void> dispose() => _method.invokeMethod('dispose');
 }

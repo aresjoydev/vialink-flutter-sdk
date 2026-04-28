@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'vialink_method_channel.dart';
 import 'models/deep_link_data.dart';
+import 'models/payment_event.dart';
 
 /// ViaLink Flutter SDK
 ///
@@ -21,6 +22,9 @@ class ViaLinkSDK {
   final _channel = ViaLinkMethodChannel();
   StreamSubscription? _deepLinkSub;
   StreamSubscription? _deferredSub;
+
+  /// 결제 추적 namespace. `ViaLinkSDK.instance.payment.initiated(args)` 형태로 사용.
+  late final PaymentApi payment = PaymentApi(_channel);
 
   /// SDK 초기화
   Future<void> configure({required String apiKey}) async {

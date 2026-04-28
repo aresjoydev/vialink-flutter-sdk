@@ -1,3 +1,10 @@
+## 2.1.0
+
+- `ViaLinkSDK.instance.payment.initiated(args)` Dart API 추가 (결제 시도 추적)
+- Android plugin: `paymentInitiated` MethodChannel handler + native `ViaLinkSDK.payment.initiated` 브리지 (Android SDK 1.1.1)
+- iOS plugin: `paymentInitiated` MethodChannel handler + native `ViaLinkSDK.shared.payment.initiated` 브리지 (iOS SDK 1.1.1)
+- `PaymentInitiatedArgs`, `PaymentInitiatedResult`, `PaymentApi` 모델/클래스 export
+
 ## 2.0.9
 
 - iOS SDK v1.0.8 바이너리 업데이트

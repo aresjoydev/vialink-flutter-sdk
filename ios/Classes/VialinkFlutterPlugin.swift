@@ -4,7 +4,7 @@ import ViaLinkCore
 
 public class ViaLinkFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
 
-    static let wrapperVersion = "2.0.7"
+    static let wrapperVersion = "2.1.0"
 
     private var deepLinkSink: FlutterEventSink?
     private var deferredHandler = DeferredStreamHandler()
@@ -89,6 +89,45 @@ public class ViaLinkFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamHandler
                 } catch {
                     DispatchQueue.main.async {
                         result(FlutterError(code: "CREATE_LINK_ERROR", message: error.localizedDescription, details: nil))
+                    }
+                }
+            }
+
+        case "paymentInitiated":
+            guard let args = call.arguments as? [String: Any] else {
+                result(FlutterError(code: "E_INVALID_ARG", message: "arguments가 필요합니다.", details: nil))
+                return
+            }
+            guard let orderId = args["orderId"] as? String,
+                  let amount = (args["amount"] as? NSNumber)?.doubleValue,
+                  let currency = args["currency"] as? String else {
+                result(FlutterError(code: "E_INVALID_ARG", message: "orderId/amount/currency가 필요합니다.", details: nil))
+                return
+            }
+            let linkId = (args["linkId"] as? NSNumber)?.intValue
+            let paymentMethod = args["paymentMethod"] as? String
+            let metadata = args["metadata"] as? [String: String]
+
+            let payArgs = PaymentInitiatedArgs(
+                orderId: orderId,
+                amount: amount,
+                currency: currency,
+                linkId: linkId,
+                paymentMethod: paymentMethod,
+                metadata: metadata
+            )
+
+            Task {
+                do {
+                    let res = try await ViaLinkSDK.shared.payment.initiated(payArgs)
+                    DispatchQueue.main.async {
+                        result(["success": res.success, "paymentEventId": res.paymentEventId])
+                    }
+                } catch {
+                    DispatchQueue.main.async {
+                        result(FlutterError(code: "E_PAYMENT_FAILED",
+                                            message: error.localizedDescription,
+                                            details: nil))
                     }
                 }
             }

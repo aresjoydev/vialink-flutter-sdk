@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.vialink.sdk.ViaLinkSDK
 import com.vialink.sdk.model.DeepLinkData
+import com.vialink.sdk.model.PaymentInitiatedArgs
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -14,7 +15,7 @@ import kotlinx.coroutines.*
 class ViaLinkFlutterPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware {
 
     companion object {
-        const val WRAPPER_VERSION = "2.0.7"
+        const val WRAPPER_VERSION = "2.1.0"
     }
 
     private lateinit var methodChannel: MethodChannel
@@ -100,6 +101,48 @@ class ViaLinkFlutterPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Act
                     val linkResult = ViaLinkSDK.createLink(path, data, campaign)
                     linkResult.onSuccess { result.success(it) }
                     linkResult.onFailure { result.error("CREATE_LINK_ERROR", it.message, null) }
+                }
+            }
+            "paymentInitiated" -> {
+                val args = call.arguments as? Map<String, Any?>
+                if (args == null) {
+                    result.error("E_INVALID_ARG", "arguments가 필요합니다.", null)
+                    return
+                }
+                val orderId = args["orderId"] as? String
+                val amount = (args["amount"] as? Number)?.toDouble()
+                val currency = args["currency"] as? String
+                if (orderId == null || amount == null || currency == null) {
+                    result.error("E_INVALID_ARG", "orderId/amount/currency가 필요합니다.", null)
+                    return
+                }
+                val linkId = (args["linkId"] as? Number)?.toInt()
+                val paymentMethod = args["paymentMethod"] as? String
+                @Suppress("UNCHECKED_CAST")
+                val metadata = args["metadata"] as? Map<String, Any?>
+
+                val payArgs = PaymentInitiatedArgs(
+                    orderId = orderId,
+                    amount = amount,
+                    currency = currency,
+                    linkId = linkId,
+                    paymentMethod = paymentMethod,
+                    metadata = metadata,
+                )
+
+                // ViaLinkSDK.payment.initiated(args)는 suspend
+                scope.launch {
+                    try {
+                        val res = ViaLinkSDK.payment.initiated(payArgs)
+                        result.success(
+                            mapOf(
+                                "success" to res.success,
+                                "paymentEventId" to res.paymentEventId,
+                            )
+                        )
+                    } catch (e: Exception) {
+                        result.error("E_PAYMENT_FAILED", e.message ?: e.toString(), null)
+                    }
                 }
             }
             "dispose" -> {
