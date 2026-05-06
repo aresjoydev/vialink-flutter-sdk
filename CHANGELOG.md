@@ -1,3 +1,43 @@
+## 3.0.0
+
+- iOS SDK v3.0.0 바이너리 업데이트
+
+## 2.1.9
+
+- iOS SDK v1.3.0 바이너리 업데이트
+
+## 2.1.8
+
+- Android SDK v1.5.0 바이너리 업데이트
+
+## 2.1.7
+
+- Android SDK v1.4.0 바이너리 업데이트
+
+## 2.1.6
+
+- iOS SDK v1.2.0 바이너리 업데이트
+
+## 2.1.5
+
+- Android SDK v1.3.0 바이너리 업데이트
+
+## 2.1.4
+
+- iOS SDK v1.1.3 바이너리 업데이트
+
+## 2.1.3
+
+- Android SDK v1.1.4 바이너리 업데이트
+
+## 2.1.2
+
+- iOS SDK v1.1.2 바이너리 업데이트
+
+## 2.1.1
+
+- Android SDK v1.1.3 바이너리 업데이트
+
 ## 2.1.0
 
 - `ViaLinkSDK.instance.payment.initiated(args)` Dart API 추가 (결제 시도 추적)

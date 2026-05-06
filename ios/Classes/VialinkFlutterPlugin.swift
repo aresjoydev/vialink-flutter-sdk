@@ -54,12 +54,17 @@ public class ViaLinkFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamHandler
                     self?.pendingDeepLink = map
                 }
             }
-            ViaLinkSDK.shared.onDeferredDeepLink { [weak self] data in
-                let map = data.toFlutterMap()
+            // 디퍼드 콜백: SDK 3.0+ 시그니처 (data, error) — 항상 1회 호출
+            // EventChannel 페이로드는 Dart 측이 ["data", "error"] 키로 파싱한다.
+            ViaLinkSDK.shared.onDeferredDeepLink { [weak self] data, error in
+                let payload: [String: Any?] = [
+                    "data": data?.toFlutterMap() as Any?,
+                    "error": error?.toFlutterMap() as Any?,
+                ]
                 if let sink = self?.deferredHandler.sink {
-                    sink(map)
+                    sink(payload)
                 } else {
-                    self?.deferredHandler.pending = map
+                    self?.deferredHandler.pending = payload
                 }
             }
             result(nil)
@@ -80,10 +85,36 @@ public class ViaLinkFlutterPlugin: NSObject, FlutterPlugin, FlutterStreamHandler
             }
             let data = args?["data"] as? [String: String]
             let campaign = args?["campaign"] as? String
+            // linkType: "static"(기본) 또는 "dynamic"
+            let linkType = args?["linkType"] as? String ?? "static"
+            // 폴백 URL/OG/채널/태그 등 부가 옵션 (선택)
+            let iosUrl = args?["iosUrl"] as? String
+            let androidUrl = args?["androidUrl"] as? String
+            let webUrl = args?["webUrl"] as? String
+            let ogTitle = args?["ogTitle"] as? String
+            let ogDescription = args?["ogDescription"] as? String
+            let ogImageUrl = args?["ogImageUrl"] as? String
+            let channel = args?["channel"] as? String
+            let feature = args?["feature"] as? String
+            let tags = args?["tags"] as? [String]
+            let expiresAt = args?["expiresAt"] as? String
             Task {
                 do {
                     let url = try await ViaLinkSDK.shared.createLink(
-                        path: path, data: data, campaign: campaign
+                        path: path,
+                        data: data,
+                        campaign: campaign,
+                        linkType: linkType,
+                        iosUrl: iosUrl,
+                        androidUrl: androidUrl,
+                        webUrl: webUrl,
+                        ogTitle: ogTitle,
+                        ogDescription: ogDescription,
+                        ogImageUrl: ogImageUrl,
+                        channel: channel,
+                        feature: feature,
+                        tags: tags,
+                        expiresAt: expiresAt
                     )
                     DispatchQueue.main.async { result(url) }
                 } catch {
@@ -189,9 +220,21 @@ private class DeferredStreamHandler: NSObject, FlutterStreamHandler {
     }
 }
 
-// DeepLinkData → Flutter Map
+// DeepLinkData → Flutter Map (linkId는 어트리뷰션 fallback용)
 private extension DeepLinkData {
     func toFlutterMap() -> [String: Any?] {
-        return ["path": path, "params": params, "shortCode": shortCode]
+        return ["path": path, "params": params, "shortCode": shortCode, "linkId": linkId as Any?]
+    }
+}
+
+// DeferredError → Flutter Map (Dart DeferredError.fromMap과 키가 일치해야 함)
+private extension DeferredError {
+    func toFlutterMap() -> [String: Any?] {
+        return [
+            "code": code.rawValue,
+            "message": message,
+            "httpStatus": httpStatus as Any?,
+            "retryable": retryable,
+        ]
     }
 }

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.vialink.sdk.ViaLinkSDK
 import com.vialink.sdk.model.DeepLinkData
+import com.vialink.sdk.model.DeferredError
 import com.vialink.sdk.model.PaymentInitiatedArgs
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -74,10 +75,15 @@ class ViaLinkFlutterPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Act
                     if (deepLinkSink != null) deepLinkSink?.success(map)
                     else pendingDeepLink = map
                 }
-                ViaLinkSDK.onDeferredDeepLink { data ->
-                    val map = data.toMap()
-                    if (deferredSink != null) deferredSink?.success(map)
-                    else pendingDeferred = map
+                // 디퍼드 콜백: SDK 3.0+ 시그니처 (data, error) — 항상 1회 호출
+                // EventChannel 페이로드는 Dart 측이 {'data', 'error'} 키로 파싱한다.
+                ViaLinkSDK.onDeferredDeepLink { data, error ->
+                    val payload = mapOf(
+                        "data" to data?.toMap(),
+                        "error" to error?.toMap(),
+                    )
+                    if (deferredSink != null) deferredSink?.success(payload)
+                    else pendingDeferred = payload
                 }
 
                 // 초기 Intent 처리 (콜드 스타트)
@@ -97,8 +103,37 @@ class ViaLinkFlutterPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Act
                 @Suppress("UNCHECKED_CAST")
                 val data = call.argument<Map<String, Any>>("data")
                 val campaign = call.argument<String>("campaign")
+                // linkType: 'static'(기본) 또는 'dynamic'
+                val linkType = call.argument<String>("linkType") ?: "static"
+                // 폴백 URL/OG/채널/태그 등 부가 옵션 (선택)
+                val iosUrl = call.argument<String>("iosUrl")
+                val androidUrl = call.argument<String>("androidUrl")
+                val webUrl = call.argument<String>("webUrl")
+                val ogTitle = call.argument<String>("ogTitle")
+                val ogDescription = call.argument<String>("ogDescription")
+                val ogImageUrl = call.argument<String>("ogImageUrl")
+                val channel = call.argument<String>("channel")
+                val feature = call.argument<String>("feature")
+                @Suppress("UNCHECKED_CAST")
+                val tags = call.argument<List<String>>("tags")
+                val expiresAt = call.argument<String>("expiresAt")
                 scope.launch {
-                    val linkResult = ViaLinkSDK.createLink(path, data, campaign)
+                    val linkResult = ViaLinkSDK.createLink(
+                        path = path,
+                        data = data,
+                        campaign = campaign,
+                        linkType = linkType,
+                        iosUrl = iosUrl,
+                        androidUrl = androidUrl,
+                        webUrl = webUrl,
+                        ogTitle = ogTitle,
+                        ogDescription = ogDescription,
+                        ogImageUrl = ogImageUrl,
+                        channel = channel,
+                        feature = feature,
+                        tags = tags,
+                        expiresAt = expiresAt
+                    )
                     linkResult.onSuccess { result.success(it) }
                     linkResult.onFailure { result.error("CREATE_LINK_ERROR", it.message, null) }
                 }
@@ -173,9 +208,18 @@ class ViaLinkFlutterPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Act
     }
 }
 
-// DeepLinkData → Map 변환
+// DeepLinkData → Map 변환 (linkId는 어트리뷰션 fallback용)
 private fun DeepLinkData.toMap(): Map<String, Any?> = mapOf(
     "path" to path,
     "params" to params,
-    "shortCode" to shortCode
+    "shortCode" to shortCode,
+    "linkId" to linkId
+)
+
+// DeferredError → Map 변환 (Dart DeferredError.fromMap과 키가 일치해야 함)
+private fun DeferredError.toMap(): Map<String, Any?> = mapOf(
+    "code" to code,
+    "message" to message,
+    "httpStatus" to httpStatus,
+    "retryable" to retryable,
 )

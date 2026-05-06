@@ -18,10 +18,36 @@ class ViaLinkMethodChannel {
     required String path,
     Map<String, dynamic>? data,
     String? campaign,
+    String linkType = 'static',
+    String? iosUrl,
+    String? androidUrl,
+    String? webUrl,
+    String? ogTitle,
+    String? ogDescription,
+    String? ogImageUrl,
+    String? channel,
+    String? feature,
+    List<String>? tags,
+    String? expiresAt,
   }) async {
     final result = await _method.invokeMethod<String>(
       'createLink',
-      {'path': path, 'data': data, 'campaign': campaign},
+      {
+        'path': path,
+        'data': data,
+        'campaign': campaign,
+        'linkType': linkType,
+        'iosUrl': ?iosUrl,
+        'androidUrl': ?androidUrl,
+        'webUrl': ?webUrl,
+        'ogTitle': ?ogTitle,
+        'ogDescription': ?ogDescription,
+        'ogImageUrl': ?ogImageUrl,
+        'channel': ?channel,
+        'feature': ?feature,
+        'tags': ?tags,
+        'expiresAt': ?expiresAt,
+      },
     );
     return result!;
   }
