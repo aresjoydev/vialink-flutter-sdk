@@ -1,0 +1,39 @@
+# Generic ignores
+node_modules/
+dist/
+*.class
+*.py[cod]
+*.log
+*.jar
+target/
+.idea/
+TEST*.xml
+.DS_Store
+Thumbs.db
+*.app
+*.exe
+*.war
+*.mp4
+*.tiff
+*.avi
+*.flv
+*.mov
+*.wmv
+
+# Flutter ignores
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+.packages
+.pub/
+build/
+
+# Android ignores
+android/.gradle/
+android/local.properties
+android/repo/
+
+# iOS ignores
+ios/.generated/
+ios/Flutter/

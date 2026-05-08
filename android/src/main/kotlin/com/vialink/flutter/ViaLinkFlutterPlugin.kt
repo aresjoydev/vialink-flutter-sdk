@@ -1,235 +1,223 @@
 package com.vialink.flutter
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import com.vialink.sdk.ViaLinkSDK
 import com.vialink.sdk.model.DeepLinkData
-import com.vialink.sdk.model.DeferredError
 import com.vialink.sdk.model.PaymentInitiatedArgs
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
-import io.flutter.plugin.common.*
+import io.flutter.plugin.common.PluginRegistry
 import kotlinx.coroutines.*
 
-class ViaLinkFlutterPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware {
+/// ViaLink Flutter Plugin — Android 네이티브 브릿지
+///
+/// Pigeon 생성 [ViaLinkHostApi]를 구현하여 네이티브 ViaLinkSDK를 호출합니다.
+/// Activity의 Intent를 자동 감지하여 딥링크를 처리합니다.
+class ViaLinkFlutterPlugin :
+    FlutterPlugin,
+    ActivityAware,
+    PluginRegistry.NewIntentListener,
+    ViaLinkHostApi {
 
     companion object {
-        const val WRAPPER_VERSION = "3.1.0"
+        private const val WRAPPER_VERSION = "2.0.0"
     }
 
-    private lateinit var methodChannel: MethodChannel
-    private lateinit var deepLinkChannel: EventChannel
-    private lateinit var deferredChannel: EventChannel
-    private var context: Context? = null
+    private var flutterApi: ViaLinkFlutterApi? = null
     private var activity: Activity? = null
-
-    private var deepLinkSink: EventChannel.EventSink? = null
-    private var deferredSink: EventChannel.EventSink? = null
-
-    // EventSink 연결 전 수신된 이벤트를 임시 보관.
-    // 3.1.0+: 딥링크는 일반 진입 시 null payload를 전달하므로, link 진입(map != null) /
-    // 일반 진입(map == null)을 구분하기 위해 별도 플래그(`hasPendingDeepLink`)를 둔다.
-    private var pendingDeepLink: Map<String, Any?>? = null
-    private var hasPendingDeepLink: Boolean = false
-    private var pendingDeferred: Map<String, Any?>? = null
-
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
+    // ──────────────────────────────────────────────
+    // FlutterPlugin
+    // ──────────────────────────────────────────────
+
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        context = binding.applicationContext
-
-        methodChannel = MethodChannel(binding.binaryMessenger, "com.vialink.sdk/methods")
-        methodChannel.setMethodCallHandler(this)
-
-        deepLinkChannel = EventChannel(binding.binaryMessenger, "com.vialink.sdk/deeplinks")
-        deepLinkChannel.setStreamHandler(object : EventChannel.StreamHandler {
-            override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
-                deepLinkSink = events
-                // pending 이벤트 flush — 3.1.0+: null payload(일반 진입)도 그대로 전달.
-                if (hasPendingDeepLink) {
-                    events?.success(pendingDeepLink)
-                    pendingDeepLink = null
-                    hasPendingDeepLink = false
-                }
-            }
-            override fun onCancel(arguments: Any?) { deepLinkSink = null }
-        })
-
-        deferredChannel = EventChannel(binding.binaryMessenger, "com.vialink.sdk/deferred")
-        deferredChannel.setStreamHandler(object : EventChannel.StreamHandler {
-            override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
-                deferredSink = events
-                pendingDeferred?.let { events?.success(it) }
-                pendingDeferred = null
-            }
-            override fun onCancel(arguments: Any?) { deferredSink = null }
-        })
+        ViaLinkHostApi.setUp(binding.binaryMessenger, this)
+        flutterApi = ViaLinkFlutterApi(binding.binaryMessenger)
     }
-
-    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
-        when (call.method) {
-            "configure" -> {
-                val apiKey = call.argument<String>("apiKey")!!
-                ViaLinkSDK.setWrapper("flutter/$WRAPPER_VERSION")
-                ViaLinkSDK.init(context!!, apiKey)
-
-                // 네이티브 콜백 → EventSink 연결
-                // 3.1.0+: data == null은 일반 진입을 의미한다. EventSink는 null payload를 그대로 전달한다.
-                ViaLinkSDK.onDeepLink { data ->
-                    val map: Map<String, Any?>? = data?.toMap()
-                    if (deepLinkSink != null) deepLinkSink?.success(map)
-                    else {
-                        pendingDeepLink = map
-                        hasPendingDeepLink = true
-                    }
-                }
-                // 디퍼드 콜백: SDK 3.0+ 시그니처 (data, error) — 항상 1회 호출
-                // EventChannel 페이로드는 Dart 측이 {'data', 'error'} 키로 파싱한다.
-                ViaLinkSDK.onDeferredDeepLink { data, error ->
-                    val payload = mapOf(
-                        "data" to data?.toMap(),
-                        "error" to error?.toMap(),
-                    )
-                    if (deferredSink != null) deferredSink?.success(payload)
-                    else pendingDeferred = payload
-                }
-
-                // 초기 Intent 처리 (콜드 스타트)
-                activity?.intent?.let { ViaLinkSDK.handleIntent(it) }
-
-                result.success(null)
-            }
-            "track" -> {
-                val eventName = call.argument<String>("eventName")!!
-                @Suppress("UNCHECKED_CAST")
-                val data = call.argument<Map<String, Any>>("data")
-                ViaLinkSDK.track(eventName, data)
-                result.success(null)
-            }
-            "createLink" -> {
-                val path = call.argument<String>("path")!!
-                @Suppress("UNCHECKED_CAST")
-                val data = call.argument<Map<String, Any>>("data")
-                val campaign = call.argument<String>("campaign")
-                // linkType: 'static'(기본) 또는 'dynamic'
-                val linkType = call.argument<String>("linkType") ?: "static"
-                // 폴백 URL/OG/채널/태그 등 부가 옵션 (선택)
-                val iosUrl = call.argument<String>("iosUrl")
-                val androidUrl = call.argument<String>("androidUrl")
-                val webUrl = call.argument<String>("webUrl")
-                val ogTitle = call.argument<String>("ogTitle")
-                val ogDescription = call.argument<String>("ogDescription")
-                val ogImageUrl = call.argument<String>("ogImageUrl")
-                val channel = call.argument<String>("channel")
-                val feature = call.argument<String>("feature")
-                @Suppress("UNCHECKED_CAST")
-                val tags = call.argument<List<String>>("tags")
-                val expiresAt = call.argument<String>("expiresAt")
-                scope.launch {
-                    val linkResult = ViaLinkSDK.createLink(
-                        path = path,
-                        data = data,
-                        campaign = campaign,
-                        linkType = linkType,
-                        iosUrl = iosUrl,
-                        androidUrl = androidUrl,
-                        webUrl = webUrl,
-                        ogTitle = ogTitle,
-                        ogDescription = ogDescription,
-                        ogImageUrl = ogImageUrl,
-                        channel = channel,
-                        feature = feature,
-                        tags = tags,
-                        expiresAt = expiresAt
-                    )
-                    linkResult.onSuccess { result.success(it) }
-                    linkResult.onFailure { result.error("CREATE_LINK_ERROR", it.message, null) }
-                }
-            }
-            "paymentInitiated" -> {
-                val args = call.arguments as? Map<String, Any?>
-                if (args == null) {
-                    result.error("E_INVALID_ARG", "arguments가 필요합니다.", null)
-                    return
-                }
-                val orderId = args["orderId"] as? String
-                val amount = (args["amount"] as? Number)?.toDouble()
-                val currency = args["currency"] as? String
-                if (orderId == null || amount == null || currency == null) {
-                    result.error("E_INVALID_ARG", "orderId/amount/currency가 필요합니다.", null)
-                    return
-                }
-                val linkId = (args["linkId"] as? Number)?.toInt()
-                val paymentMethod = args["paymentMethod"] as? String
-                @Suppress("UNCHECKED_CAST")
-                val metadata = args["metadata"] as? Map<String, Any?>
-
-                val payArgs = PaymentInitiatedArgs(
-                    orderId = orderId,
-                    amount = amount,
-                    currency = currency,
-                    linkId = linkId,
-                    paymentMethod = paymentMethod,
-                    metadata = metadata,
-                )
-
-                // ViaLinkSDK.payment.initiated(args)는 suspend
-                scope.launch {
-                    try {
-                        val res = ViaLinkSDK.payment.initiated(payArgs)
-                        result.success(
-                            mapOf(
-                                "success" to res.success,
-                                "paymentEventId" to res.paymentEventId,
-                            )
-                        )
-                    } catch (e: Exception) {
-                        result.error("E_PAYMENT_FAILED", e.message ?: e.toString(), null)
-                    }
-                }
-            }
-            "dispose" -> {
-                result.success(null)
-            }
-            else -> result.notImplemented()
-        }
-    }
-
-    // ActivityAware — App Links Intent 자동 처리
-    override fun onAttachedToActivity(binding: ActivityPluginBinding) {
-        activity = binding.activity
-        binding.addOnNewIntentListener { intent ->
-            ViaLinkSDK.handleIntent(intent)
-            true
-        }
-    }
-
-    override fun onDetachedFromActivity() { activity = null }
-    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
-        activity = binding.activity
-    }
-    override fun onDetachedFromActivityForConfigChanges() { activity = null }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        methodChannel.setMethodCallHandler(null)
+        ViaLinkHostApi.setUp(binding.binaryMessenger, null)
+        flutterApi = null
         scope.cancel()
+    }
+
+    // ──────────────────────────────────────────────
+    // ActivityAware — Intent 자동 처리
+    // ──────────────────────────────────────────────
+
+    override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+        activity = binding.activity
+        binding.addOnNewIntentListener(this)
+        // 콜드 스타트 시 초기 Intent 처리
+        binding.activity.intent?.let { handleIntentIfNeeded(it) }
+    }
+
+    override fun onDetachedFromActivityForConfigChanges() {
+        activity = null
+    }
+
+    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+        activity = binding.activity
+        binding.addOnNewIntentListener(this)
+    }
+
+    override fun onDetachedFromActivity() {
+        activity = null
+    }
+
+    /// Warm Start — 새로운 Intent 수신 시 자동 처리
+    override fun onNewIntent(intent: Intent): Boolean {
+        return handleIntentIfNeeded(intent)
+    }
+
+    private fun handleIntentIfNeeded(intent: Intent): Boolean {
+        return try {
+            ViaLinkSDK.handleIntent(intent)
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    // ViaLinkHostApi 구현 (Pigeon)
+    // ──────────────────────────────────────────────
+
+    override fun configure(apiKey: String) {
+        val context = activity?.applicationContext
+            ?: throw IllegalStateException("Activity가 아직 연결되지 않았습니다")
+
+        ViaLinkSDK.setWrapperInternal("flutter/$WRAPPER_VERSION")
+        ViaLinkSDK.init(context, apiKey)
+
+        // 네이티브 콜백 → Flutter 이벤트
+        ViaLinkSDK.onDeepLink { data ->
+            flutterApi?.onDeepLink(data.toPigeon()) {}
+        }
+
+        ViaLinkSDK.onDeferredDeepLink { data, error ->
+            flutterApi?.onDeferredDeepLink(data?.toPigeon(), error?.message) {}
+        }
+
+        // 초기 Intent 처리 (configure 후)
+        activity?.intent?.let { handleIntentIfNeeded(it) }
+    }
+
+    override fun handleDeepLink(url: String) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        ViaLinkSDK.handleIntent(intent)
+    }
+
+    override fun track(eventName: String, data: Map<String?, String?>?) {
+        val cleanData = data?.entries
+            ?.filter { it.key != null && it.value != null }
+            ?.associate { it.key!! to (it.value!! as Any) }
+        ViaLinkSDK.track(eventName, cleanData)
+    }
+
+    override fun getDeepLinkData(): VLDeepLinkData? {
+        return ViaLinkSDK.getDeepLinkData()?.toPigeon()
+    }
+
+    override fun getDeferredLinkData(): VLDeepLinkData? {
+        return ViaLinkSDK.getDeferredLinkData()?.toPigeon()
+    }
+
+    override fun awaitDeepLinkData(callback: (Result<VLDeepLinkData?>) -> Unit) {
+        scope.launch {
+            try {
+                val data = ViaLinkSDK.awaitDeepLinkData()
+                callback(Result.success(data?.toPigeon()))
+            } catch (e: Exception) {
+                callback(Result.failure(e))
+            }
+        }
+    }
+
+    override fun awaitDeferredLinkData(callback: (Result<VLDeepLinkData?>) -> Unit) {
+        scope.launch {
+            try {
+                val data = ViaLinkSDK.awaitDeferredLinkData()
+                callback(Result.success(data?.toPigeon()))
+            } catch (e: Exception) {
+                callback(Result.failure(e))
+            }
+        }
+    }
+
+    override fun createLink(args: VLCreateLinkArgs, callback: (Result<String>) -> Unit) {
+        scope.launch {
+            try {
+                val dataMap = args.data?.entries
+                    ?.filter { it.key != null && it.value != null }
+                    ?.associate { it.key!! to (it.value!! as Any) }
+                val tagsList = args.tags?.filterNotNull()
+
+                val result = ViaLinkSDK.createLink(
+                    path = args.path,
+                    data = dataMap,
+                    campaign = args.campaign,
+                    linkType = args.linkType,
+                    iosUrl = args.iosUrl,
+                    androidUrl = args.androidUrl,
+                    webUrl = args.webUrl,
+                    ogTitle = args.ogTitle,
+                    ogDescription = args.ogDescription,
+                    ogImageUrl = args.ogImageUrl,
+                    channel = args.channel,
+                    feature = args.feature,
+                    tags = tagsList,
+                    expiresAt = args.expiresAt,
+                )
+                result.onSuccess { callback(Result.success(it)) }
+                result.onFailure { callback(Result.failure(it)) }
+            } catch (e: Exception) {
+                callback(Result.failure(e))
+            }
+        }
+    }
+
+    override fun trackPayment(args: VLPaymentArgs, callback: (Result<VLPaymentResult>) -> Unit) {
+        scope.launch {
+            try {
+                val metadataMap = args.metadata?.entries
+                    ?.filter { it.key != null && it.value != null }
+                    ?.associate { it.key!! to (it.value as Any?) }
+
+                val payArgs = PaymentInitiatedArgs(
+                    orderId = args.orderId,
+                    amount = args.amount,
+                    currency = args.currency,
+                    linkId = args.linkId?.toInt(),
+                    paymentMethod = args.paymentMethod,
+                    metadata = metadataMap,
+                )
+                val result = ViaLinkSDK.trackPayment(payArgs)
+                callback(Result.success(
+                    VLPaymentResult(
+                        success = result.success,
+                        paymentEventId = result.paymentEventId,
+                    )
+                ))
+            } catch (e: Exception) {
+                callback(Result.failure(e))
+            }
+        }
     }
 }
 
-// DeepLinkData → Map 변환 (linkId는 어트리뷰션 fallback용)
-private fun DeepLinkData.toMap(): Map<String, Any?> = mapOf(
-    "path" to path,
-    "params" to params,
-    "shortCode" to shortCode,
-    "linkId" to linkId
-)
+// ──────────────────────────────────────────────
+// DeepLinkData → Pigeon 변환
+// ──────────────────────────────────────────────
 
-// DeferredError → Map 변환 (Dart DeferredError.fromMap과 키가 일치해야 함)
-private fun DeferredError.toMap(): Map<String, Any?> = mapOf(
-    "code" to code,
-    "message" to message,
-    "httpStatus" to httpStatus,
-    "retryable" to retryable,
-)
+private fun DeepLinkData.toPigeon(): VLDeepLinkData {
+    return VLDeepLinkData(
+        path = path,
+        params = params.mapKeys { it.key },
+        shortCode = shortCode,
+        linkId = linkId?.toLong(),
+    )
+}

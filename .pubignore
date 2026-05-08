@@ -1,0 +1,10 @@
+sample/
+build/
+.dart_tool/
+.gradle/
+*.iml
+local.properties
+.idea/
+.flutter-plugins-dependencies
+.metadata
+pigeons/

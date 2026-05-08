@@ -1,107 +1,62 @@
-## 3.2.0
-
-- ViaLink SDK 3.2 동작 확장: 비첫 실행에서도 `onDeferredDeepLink` 콜백 1회 호출 (organic install과 동일한 `(null, null)`, /v1/open 네트워크 호출은 첫 실행에만)
-- Android .aar 3.2.0 / iOS xcframework 3.2.0 바이너리 업데이트
-
-## 3.1.1
-
-- iOS SDK v3.1.1 바이너리 업데이트
-
-## 3.1.1
-
-- Android SDK v3.1.0 바이너리 업데이트
-
-## 3.0.0
-
-- iOS SDK v3.0.0 바이너리 업데이트
-
-## 2.1.9
-
-- iOS SDK v1.3.0 바이너리 업데이트
-
-## 2.1.8
-
-- Android SDK v1.5.0 바이너리 업데이트
-
-## 2.1.7
-
-- Android SDK v1.4.0 바이너리 업데이트
-
-## 2.1.6
-
-- iOS SDK v1.2.0 바이너리 업데이트
-
-## 2.1.5
-
-- Android SDK v1.3.0 바이너리 업데이트
-
-## 2.1.4
-
-- iOS SDK v1.1.3 바이너리 업데이트
-
-## 2.1.3
-
-- Android SDK v1.1.4 바이너리 업데이트
-
-## 2.1.2
-
-- iOS SDK v1.1.2 바이너리 업데이트
-
-## 2.1.1
-
-- Android SDK v1.1.3 바이너리 업데이트
-
-## 2.1.0
-
-- `ViaLinkSDK.instance.payment.initiated(args)` Dart API 추가 (결제 시도 추적)
-- Android plugin: `paymentInitiated` MethodChannel handler + native `ViaLinkSDK.payment.initiated` 브리지 (Android SDK 1.1.1)
-- iOS plugin: `paymentInitiated` MethodChannel handler + native `ViaLinkSDK.shared.payment.initiated` 브리지 (iOS SDK 1.1.1)
-- `PaymentInitiatedArgs`, `PaymentInitiatedResult`, `PaymentApi` 모델/클래스 export
-
-## 2.0.9
-
-- iOS SDK v1.0.8 바이너리 업데이트
-
-## 2.0.8
-
-- Android SDK v1.0.15 바이너리 업데이트
-
-## 2.0.7
-
-- iOS SDK v1.0.7 바이너리 업데이트
-
-## 2.0.6
-
-- iOS xcframework Modules 포함 (import ViaLinkCore 수정)
-
-## 2.0.5
-
-- iOS SDK v1.0.6 바이너리 업데이트
-
-## 2.0.4
-
-- Android SDK v1.0.13 바이너리 업데이트
-
-## 2.0.3
-
-- Android SDK v1.0.12 바이너리 업데이트 (딥링크 URL 파싱 수정 + fp 직접 매칭)
-- 딥링크 /v1/resolve 요청이 누락되던 문제 수정
-
-## 2.0.2
-
-- AndroidManifest.xml에서 deprecated package 속성 제거 (AGP 8.x 호환)
-- fp 파라미터 디퍼드 딥링크 직접 매칭 지원 (네이티브 SDK 업데이트)
-
 ## 2.0.1
 
-- Android SDK v1.0.8 + iOS SDK v2.0.1 바이너리 업데이트
-- API 도메인 vialink.app 반영
+- iOS SDK v3.0.10 바이너리 업데이트
 
 ## 2.0.0
 
-- Flutter Plugin 아키텍처로 전환 (네이티브 바이너리 기반)
-- Dart 비즈니스 로직 제거 — MethodChannel 인터페이스만 제공
-- Android: .aar 바이너리 포함 (소스코드 비공개)
-- iOS: .xcframework 바이너리 포함 (소스코드 비공개)
-- 외부 Dart 의존성 완전 제거 (app_links, device_info_plus, http, shared_preferences)
-- 딥링크 자동 수신 (Android Intent / iOS Universal Link 네이티브 처리)
+### ⚠️ Breaking Change: 네이티브 SDK 기반 브릿지 플러그인으로 전면 재설계
+
+- **아키텍처 전환**: Dart 비즈니스 로직 → 네이티브 SDK(AAR/XCFramework) 브릿지
+- **Pigeon 도입**: Flutter ↔ Native 통신을 타입-안전 코드 생성으로 처리
+- **패키지명 변경**: `vialink_flutter_sdk` → `vialink_flutter_plugin`
+- **콜백 분리**: `onDeepLink` / `onDeferredDeepLink` 완전 분리 (Android SDK v3.2.x 아키텍처 동기화)
+- **Pending Cache**: 콜백 미등록 시 네이티브에서 결과 캐시 → 등록 시 즉시 flush
+- **Pull API 추가**: `getDeepLinkData()`, `getDeferredLinkData()`, `awaitDeepLinkData()`, `awaitDeferredLinkData()`
+- **결제 추적**: `trackPayment()` API 추가 (POST /v1/payments/initiated)
+- **링크 생성 확장**: `createLink()`에 OG 메타, 채널, 태그 등 전체 옵션 지원
+- **의존성 제거**: `http`, `shared_preferences`, `device_info_plus`, `app_links` 모두 제거
+
+### 삭제된 클래스 (네이티브에 위임)
+- `NetworkClient`, `DeepLinkHandler`, `DeferredMatcher`
+- `EventTracker`, `DeviceInfoCollector`, `ViaLinkStorage`
+- `DeviceInfoData`, `EventPayload`
+
+## 1.0.5
+
+- 딥링크 자동 수신 추가 (app_links) — 콜드 스타트 + 실행 중 수신 모두 자동 처리
+- 개발자가 handleUri()를 수동 호출할 필요 없음
+- URL 파싱을 /{slug}/{code} 형식으로 변경 (구형 /c/{code} 제거)
+- app_links 의존성 추가
+
+## 1.0.4
+
+- Android 디퍼드 딥링킹 핑거프린트 불일치 수정 (Platform.operatingSystemVersion → device_info_plus)
+- Android에서 빌드번호 대신 실제 OS 버전(Build.VERSION.RELEASE) 사용
+- device_info_plus 의존성 추가
+- 디바이스 모델명을 실제 기기 모델로 변경
+
+## 1.0.3
+
+- API 기본 도메인을 실제 프로덕션 URL로 변경 (your-domain.com -> vialink.memi.me)
+- User-Agent 버전 업데이트 (1.0.0 -> 1.0.2)
+
+## 1.0.2
+
+- README.md Usage 섹션을 docs 페이지와 동기화
+- .pubignore 추가 (빌드 캐시 제외)
+
+## 1.0.1
+
+- DeepLinkHandler: GET /api/links/by-code/ -> POST /v1/resolve 변경
+- NetworkClient.createLink: 요청 필드명 deeplink_path/deeplink_data로 통일
+- README.md 업데이트 (pub.dev 랜딩 페이지 반영)
+- LICENSE MIT 라이선스 적용
+
+## 1.0.0
+
+- 초기 릴리스
+- 딥링크 라우팅 (App Links / Universal Links)
+- 디퍼드 딥링킹 (fingerprint 매칭)
+- 이벤트 추적 (배치 전송)
+- 링크 생성 API
+- POST /v1/resolve 딥링크 조회 지원
