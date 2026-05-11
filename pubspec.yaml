@@ -1,0 +1,27 @@
+name: vialink_flutter_plugin
+description: ViaLink 딥링크 SDK for Flutter - 네이티브 SDK 기반 브릿지 플러그인
+version: 3.2.4
+homepage: https://vialink.app
+
+environment:
+  sdk: ^3.11.4
+  flutter: ">=3.19.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  pigeon: ^22.7.0
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.vialink.flutter
+        pluginClass: ViaLinkFlutterPlugin
+      ios:
+        pluginClass: ViaLinkFlutterPlugin
