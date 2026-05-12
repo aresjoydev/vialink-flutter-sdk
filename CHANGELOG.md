@@ -1,3 +1,16 @@
+## 3.2.7
+
+- iOS SDK v3.0.14 dedup 보정 — `flushPendingDeepLinks` 재처리 경로가 dedup 에 잘못 막혀 cold start 시 콜백이 발사되지 않던 문제 fix
+- 3.2.6 은 dedup 도입은 됐으나 flush 차단 버그가 있어 cold start 시나리오에서 onDeepLink 미발사 → 3.2.7 로 교체 권장
+
+## 3.2.6
+
+- iOS SDK v3.0.14 바이너리 업데이트 — SceneDelegate 환경 중복 dispatch 차단
+
+## 3.2.5
+
+- iOS SDK v3.0.13 바이너리 업데이트
+
 ## 3.2.4
 
 - iOS SDK v3.0.12 바이너리 업데이트

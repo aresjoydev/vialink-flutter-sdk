@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  vialink_flutter_plugin: ^3.2.4
+  vialink_flutter_plugin: ^3.2.7
 
 dev_dependencies:
   flutter_test:
