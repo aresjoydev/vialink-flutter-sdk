@@ -1,3 +1,7 @@
+## 3.2.8
+
+- iOS SDK v3.0.15 바이너리 업데이트
+
 ## 3.2.7
 
 - iOS SDK v3.0.14 dedup 보정 — `flushPendingDeepLinks` 재처리 경로가 dedup 에 잘못 막혀 cold start 시 콜백이 발사되지 않던 문제 fix
