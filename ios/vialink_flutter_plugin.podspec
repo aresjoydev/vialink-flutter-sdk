@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'vialink_flutter_plugin'
-  s.version          = '3.2.7'
+  s.version          = '3.2.9'
   s.summary          = 'ViaLink Flutter Plugin - 딥링크, 디퍼드 딥링킹, 이벤트 추적'
   s.description      = <<-DESC
 ViaLink Flutter 플러그인입니다. 네이티브 ViaLinkCore SDK를 브릿지하여
