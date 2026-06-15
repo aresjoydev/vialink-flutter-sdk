@@ -1,6 +1,6 @@
 PODS:
   - Flutter (1.0.0)
-  - vialink_flutter_plugin (2.0.0):
+  - vialink_flutter_plugin (3.2.9):
     - Flutter
 
 DEPENDENCIES:
@@ -15,7 +15,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  vialink_flutter_plugin: a9acec6d0e668ed8f95f4e28aef842794637ba10
+  vialink_flutter_plugin: d531657c6bb4850d1c6819f454aac3acc95afa10
 
 PODFILE CHECKSUM: 3c63482e143d1b91d2d2560aee9fb04ecc74ac7e
 
