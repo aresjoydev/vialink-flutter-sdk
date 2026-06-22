@@ -1,25 +1,27 @@
 # ViaLink Flutter SDK
 
-ViaLink 딥링크 SDK for Flutter — 네이티브 SDK(AAR/XCFramework) 기반 브릿지 플러그인
+**English** | [한국어](README.ko.md)
 
-## 특징
+ViaLink deep link SDK for Flutter — a bridge plugin built on the native SDKs (AAR/XCFramework).
 
-- **딥링크 라우팅** — App Links / Universal Links 자동 처리
-- **디퍼드 딥링킹** — 앱 설치 후 첫 실행 시 핑거프린트 기반 매칭
-- **이벤트 추적** — 커스텀 이벤트 배치 전송
-- **결제 어트리뷰션** — 결제 시도 기록 + 자동 link_id 첨부
-- **링크 생성** — 앱 내에서 딥링크 생성 (static/dynamic)
+## Features
 
-## 설치
+- **Deep link routing** — automatic handling of App Links / Universal Links
+- **Deferred deep linking** — fingerprint-based matching on the first launch after install
+- **Event tracking** — batched delivery of custom events
+- **Payment attribution** — records payment attempts and automatically attaches `link_id`
+- **Link creation** — generate deep links from within the app (static/dynamic)
+
+## Installation
 
 ```yaml
 dependencies:
   vialink_flutter_plugin: ^3.2.14
 ```
 
-## 사용법
+## Usage
 
-### 1. 초기화
+### 1. Initialization
 
 ```dart
 import 'package:vialink_flutter_plugin/vialink_flutter_plugin.dart';
@@ -31,26 +33,26 @@ void main() async {
 }
 ```
 
-### 2. 딥링크 콜백
+### 2. Deep link callbacks
 
 ```dart
-// App Link / Universal Link 수신
+// Receive App Links / Universal Links
 ViaLinkSDK.instance.onDeepLink((data) {
   Navigator.pushNamed(context, data.path);
   print('params: ${data.params}');
 });
 
-// 디퍼드 딥링크 (첫 설치 후 매칭)
+// Deferred deep link (matched after the first install)
 ViaLinkSDK.instance.onDeferredDeepLink((data, error) {
   if (error != null) {
-    print('디퍼드 매칭 실패: ${error.message}');
+    print('deferred match failed: ${error.message}');
     return;
   }
   if (data != null) {
-    print('디퍼드 매칭 성공: ${data.path}');
+    print('deferred match succeeded: ${data.path}');
     Navigator.pushNamed(context, data.path);
   } else {
-    print('매칭 결과 없음 (Organic Install)');
+    print('no match (organic install)');
   }
 });
 ```
@@ -58,16 +60,16 @@ ViaLinkSDK.instance.onDeferredDeepLink((data, error) {
 ### 3. Pull API
 
 ```dart
-// 동기 (캐시된 값 즉시 반환)
+// Synchronous (returns the cached value immediately)
 final deepLink = ViaLinkSDK.instance.getDeepLinkData();
 final deferred = ViaLinkSDK.instance.getDeferredLinkData();
 
-// 비동기 (결과 도착까지 대기)
-final deepLinkAsync = await ViaLinkSDK.instance.awaitDeepLinkData();    // 3초 타임아웃
-final deferredAsync = await ViaLinkSDK.instance.awaitDeferredLinkData(); // 결과까지 대기
+// Asynchronous (waits until the result arrives)
+final deepLinkAsync = await ViaLinkSDK.instance.awaitDeepLinkData();    // 3-second timeout
+final deferredAsync = await ViaLinkSDK.instance.awaitDeferredLinkData(); // waits until the result
 ```
 
-### 4. 이벤트 추적
+### 4. Event tracking
 
 ```dart
 ViaLinkSDK.instance.track('purchase', data: {
@@ -77,7 +79,7 @@ ViaLinkSDK.instance.track('purchase', data: {
 });
 ```
 
-### 5. 결제 추적
+### 5. Payment tracking
 
 ```dart
 final result = await ViaLinkSDK.instance.trackPayment(
@@ -89,27 +91,27 @@ final result = await ViaLinkSDK.instance.trackPayment(
 print('success: ${result.success}, id: ${result.paymentEventId}');
 ```
 
-### 6. 링크 생성
+### 6. Link creation
 
 ```dart
 final url = await ViaLinkSDK.instance.createLink(
   path: '/product/123',
   data: {'promo_code': 'FRIEND'},
   campaign: 'referral',
-  linkType: 'dynamic', // 클릭 추적 필요 시
+  linkType: 'dynamic', // when click tracking is needed
 );
-print('생성된 링크: $url');
+print('created link: $url');
 ```
 
-## 플랫폼별 추가 설정
+## Additional platform setup
 
-### Android 설정
+### Android setup
 
-`android/app/build.gradle`에서 `minSdkVersion 21` 이상 설정.
+Set `minSdkVersion 21` or higher in `android/app/build.gradle`.
 
-### iOS 설정
+### iOS setup
 
-`ios/Runner/Info.plist`에 Associated Domains 설정:
+Configure Associated Domains in `ios/Runner/Info.plist`:
 
 ```xml
 <key>com.apple.developer.associated-domains</key>
@@ -118,10 +120,10 @@ print('생성된 링크: $url');
 </array>
 ```
 
-## 문서
+## Documentation
 
-- [SDK 가이드](https://docs.vialink.app/sdk/flutter)
+- [SDK Guide](https://docs.vialink.app/sdk/flutter)
 
-## 라이선스
+## License
 
 MIT License — Aresjoy Inc.
