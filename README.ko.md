@@ -16,7 +16,7 @@ ViaLink 딥링크 SDK for Flutter — 네이티브 SDK(AAR/XCFramework) 기반 �
 
 ```yaml
 dependencies:
-  vialink_flutter_plugin: ^3.2.14
+  vialink_flutter_plugin: ^3.2.15
 ```
 
 ## 사용법

@@ -16,7 +16,7 @@ ViaLink deep link SDK for Flutter — a bridge plugin built on the native SDKs (
 
 ```yaml
 dependencies:
-  vialink_flutter_plugin: ^3.2.14
+  vialink_flutter_plugin: ^3.2.15
 ```
 
 ## Usage
