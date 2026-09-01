@@ -133,7 +133,7 @@ print('생성된 링크: $url');
 
 ## 문서
 
-- [SDK 가이드](https://docs.vialink.app/sdk/flutter)
+- [SDK 가이드](https://docs.vialink.app/#sdk-flutter-install)
 
 ## 라이선스
 

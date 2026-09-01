@@ -135,7 +135,7 @@ Configure Associated Domains in `ios/Runner/Info.plist`:
 
 ## Documentation
 
-- [SDK Guide](https://docs.vialink.app/sdk/flutter)
+- [SDK Guide](https://docs.vialink.app/#sdk-flutter-install)
 
 ## License
 
