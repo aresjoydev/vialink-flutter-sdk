@@ -41,7 +41,7 @@ This runs on the link server — no extra SDK code needed.
 
 ```yaml
 dependencies:
-  vialink_flutter_plugin: ^3.2.15
+  vialink_flutter_plugin: ^3.2.16
 ```
 
 ## Usage

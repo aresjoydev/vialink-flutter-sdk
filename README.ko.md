@@ -39,7 +39,7 @@ Android · iOS 네이티브 SDK를 그대로 감싼 브릿지라, Dart 코드 �
 
 ```yaml
 dependencies:
-  vialink_flutter_plugin: ^3.2.15
+  vialink_flutter_plugin: ^3.2.16
 ```
 
 ## 사용법
